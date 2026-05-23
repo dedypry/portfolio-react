@@ -1,6 +1,7 @@
 "use client";
 
-import { ArrowRight, Mail, MapPin, Phone } from "lucide-react";
+import Link from "next/link";
+import { ArrowRight, Mail, MapPin, MessageSquare, Phone } from "lucide-react";
 import { FaGithub, FaLinkedin } from "react-icons/fa";
 import Reveal from "./Reveal";
 import SectionHeader from "./SectionHeader";
@@ -12,7 +13,7 @@ interface ContactProps {
 }
 
 export default function Contact({ profile }: ContactProps) {
-  const { t } = useT();
+  const { t, lang } = useT();
   return (
     <section id="contact" className="container-x py-28">
       <SectionHeader
@@ -35,9 +36,19 @@ export default function Contact({ profile }: ContactProps) {
                 {t.contact.cardDescription}
               </p>
 
-              <a href={`mailto:${profile.email}`} className="btn-primary mt-6">
-                {t.contact.emailMe} <ArrowRight size={16} />
-              </a>
+              <div className="mt-6 flex flex-wrap gap-3">
+                <a href={`mailto:${profile.email}`} className="btn-primary">
+                  {t.contact.emailMe} <ArrowRight size={16} />
+                </a>
+                <Link
+                  href={`/${lang}/contact`}
+                  className="btn-ghost"
+                  title={t.contact.leaveMessageHint}
+                >
+                  <MessageSquare size={14} />
+                  {t.contact.leaveMessage}
+                </Link>
+              </div>
 
               <div className="mt-8 grid gap-3 text-sm">
                 <a

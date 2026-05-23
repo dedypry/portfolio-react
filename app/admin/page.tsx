@@ -3,7 +3,9 @@ import {
   FaArrowRight,
   FaBriefcase,
   FaBlog,
+  FaCommentDots,
   FaGraduationCap,
+  FaInbox,
   FaProjectDiagram,
   FaCogs,
   FaUserEdit,
@@ -25,6 +27,10 @@ export default async function AdminHomePage() {
     eduCount,
     projectCount,
     skillCount,
+    pendingCommentCount,
+    approvedCommentCount,
+    unreadMessageCount,
+    totalMessageCount,
   ] = await Promise.all([
     prisma.blog.count(),
     prisma.blog.count({ where: { status: "PUBLISHED" } }),
@@ -32,9 +38,26 @@ export default async function AdminHomePage() {
     prisma.education.count(),
     prisma.project.count(),
     prisma.skill.count(),
+    prisma.comment.count({ where: { status: "PENDING" } }),
+    prisma.comment.count({ where: { status: "APPROVED" } }),
+    prisma.message.count({ where: { status: "UNREAD" } }),
+    prisma.message.count(),
   ]);
 
   const stats = [
+    {
+      label: "Inbox",
+      value: unreadMessageCount,
+      sublabel:
+        unreadMessageCount > 0
+          ? `${unreadMessageCount} unread · ${totalMessageCount} total`
+          : totalMessageCount > 0
+            ? `${totalMessageCount} total · inbox zero ✦`
+            : "no messages yet",
+      icon: FaInbox,
+      href: "/admin/messages",
+      color: "from-sky-500 to-indigo-500",
+    },
     {
       label: "Blog posts",
       value: blogCount,
@@ -42,6 +65,17 @@ export default async function AdminHomePage() {
       icon: FaBlog,
       href: "/admin/blogs",
       color: "from-indigo-500 to-fuchsia-500",
+    },
+    {
+      label: "Comments",
+      value: pendingCommentCount,
+      sublabel:
+        pendingCommentCount > 0
+          ? `${pendingCommentCount} pending review · ${approvedCommentCount} live`
+          : `${approvedCommentCount} live · all caught up`,
+      icon: FaCommentDots,
+      href: "/admin/comments",
+      color: "from-amber-500 to-rose-500",
     },
     {
       label: "Experiences",

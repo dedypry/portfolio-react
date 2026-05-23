@@ -10,7 +10,17 @@ import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
 import ScrollProgress from "@/components/ScrollProgress";
 import { isLanguage, type Language } from "@/i18n/config";
-import { getBlogBySlug, getProfile } from "@/lib/queries";
+import {
+  getApprovedComments,
+  getBlogBySlug,
+  getProfile,
+} from "@/lib/queries";
+import { hasFavorited } from "@/lib/blogTracking";
+
+import { BlogActions } from "../_components/BlogActions";
+import { BlogStats } from "../_components/BlogStats";
+import { Comments } from "../_components/Comments";
+import { ViewTracker } from "../_components/ViewTracker";
 
 export const dynamic = "force-dynamic";
 
@@ -18,6 +28,9 @@ const LABELS = {
   en: { backToBlog: "All posts", minRead: "min read" },
   id: { backToBlog: "Semua tulisan", minRead: "menit baca" },
 } as const satisfies Record<Language, Record<string, string>>;
+
+const SITE_URL =
+  process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, "") ?? "";
 
 export async function generateMetadata({
   params,
@@ -77,10 +90,24 @@ export default async function BlogDetailPage({
 
   if (!post) notFound();
 
+  // Run two more reads in parallel: the comment tree + the visitor's own
+  // favorite state (cookie-based, server-side so first paint is correct).
+  const [comments, isFavorited] = await Promise.all([
+    getApprovedComments(post.id),
+    hasFavorited(post.id),
+  ]);
+
+  // Absolute URL for share links — falls back to a relative path if the
+  // site URL env var isn't configured (dev).
+  const shareUrl = SITE_URL
+    ? `${SITE_URL}/${lang}/blog/${post.slug}`
+    : `/${lang}/blog/${post.slug}`;
+
   return (
     <div className="relative min-h-screen overflow-x-hidden">
       <ScrollProgress />
       <Navigation />
+      <ViewTracker slug={post.slug} />
 
       <main className="container-x pb-24 pt-32 sm:pt-36">
         <div className="mx-auto max-w-3xl">
@@ -126,6 +153,16 @@ export default async function BlogDetailPage({
                   ))}
                 </div>
               )}
+
+              <div className="mt-6">
+                <BlogStats
+                  viewCount={post.viewCount}
+                  favoriteCount={post.favoriteCount}
+                  shareCount={post.shareCount}
+                  commentCount={post.commentCount}
+                  lang={lang}
+                />
+              </div>
             </header>
 
             {post.coverImage && (
@@ -146,12 +183,31 @@ export default async function BlogDetailPage({
               dangerouslySetInnerHTML={{ __html: post.content }}
             />
 
+            <div className="mt-10">
+              <BlogActions
+                slug={post.slug}
+                title={post.title}
+                url={shareUrl}
+                initialFavoriteCount={post.favoriteCount}
+                initialIsFavorited={isFavorited}
+                initialShareCount={post.shareCount}
+                lang={lang}
+              />
+            </div>
+
             {post.authorName && (
-              <footer className="mt-16 border-t border-white/10 pt-8 text-sm text-white/55">
+              <footer className="mt-12 border-t border-white/10 pt-8 text-sm text-white/55">
                 Written by{" "}
                 <span className="font-medium text-white">{post.authorName}</span>.
               </footer>
             )}
+
+            <Comments
+              slug={post.slug}
+              initialComments={comments}
+              initialCount={post.commentCount}
+              lang={lang}
+            />
           </article>
         </div>
       </main>

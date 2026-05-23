@@ -105,6 +105,29 @@ export type TranslationShape = {
     elsewhereTitle: string;
     elsewhereDescription: string;
     statusOpen: string;
+    leaveMessage: string;
+    leaveMessageHint: string;
+  };
+  message: {
+    eyebrow: string;
+    title: string;
+    description: string;
+    nameLabel: string;
+    namePlaceholder: string;
+    emailLabel: string;
+    emailPlaceholder: string;
+    subjectLabel: string;
+    subjectPlaceholder: string;
+    bodyLabel: string;
+    bodyPlaceholder: string;
+    submit: string;
+    submitting: string;
+    successTitle: string;
+    successBody: string;
+    sendAnother: string;
+    backHome: string;
+    privacyNote: string;
+    failed: string;
   };
   caseStudy: {
     eyebrow: string;
@@ -484,6 +507,33 @@ export const en: TranslationShape = {
       "I'm most active on LinkedIn for collaboration and on GitHub for code.",
     statusOpen:
       "Currently open to senior / lead engineering roles & consulting.",
+    leaveMessage: "Leave a message",
+    leaveMessageHint: "Don't have email handy? Drop me a quick note instead.",
+  },
+  message: {
+    eyebrow: "Leave a message",
+    title: "Tell me what you're working on.",
+    description:
+      "Drop a note here and I'll reply to your email within a business day. No login, no fluff.",
+    nameLabel: "Your name",
+    namePlaceholder: "Jane Cooper",
+    emailLabel: "Email",
+    emailPlaceholder: "jane@company.com",
+    subjectLabel: "Subject (optional)",
+    subjectPlaceholder: "What's this about?",
+    bodyLabel: "Message",
+    bodyPlaceholder:
+      "Tell me about the project, role, or problem you're trying to solve…",
+    submit: "Send message",
+    submitting: "Sending…",
+    successTitle: "Message sent.",
+    successBody:
+      "Thanks for reaching out — I'll get back to you on email within a business day.",
+    sendAnother: "Send another",
+    backHome: "Back to homepage",
+    privacyNote:
+      "Your details are stored securely and only used to reply. No newsletters, no third parties.",
+    failed: "Couldn't send your message. Please try again in a moment.",
   },
   caseStudy: {
     eyebrow: "Case Study",

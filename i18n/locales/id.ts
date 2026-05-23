@@ -306,6 +306,33 @@ export const id: TranslationShape = {
       "Saya paling aktif di LinkedIn untuk kolaborasi dan di GitHub untuk kode.",
     statusOpen:
       "Saat ini terbuka untuk role senior / lead engineering & konsultasi.",
+    leaveMessage: "Tinggalkan pesan",
+    leaveMessageHint: "Belum sempat buka email? Tinggalin pesan singkat aja di sini.",
+  },
+  message: {
+    eyebrow: "Tinggalkan pesan",
+    title: "Ceritakan apa yang sedang kamu kerjakan.",
+    description:
+      "Tinggalin pesan di sini dan saya akan balas ke email kamu dalam satu hari kerja. Tanpa login, langsung ke intinya.",
+    nameLabel: "Nama kamu",
+    namePlaceholder: "Budi Santoso",
+    emailLabel: "Email",
+    emailPlaceholder: "budi@perusahaan.com",
+    subjectLabel: "Subjek (opsional)",
+    subjectPlaceholder: "Mau bicarain apa?",
+    bodyLabel: "Pesan",
+    bodyPlaceholder:
+      "Ceritakan tentang project, role, atau masalah yang sedang kamu hadapi…",
+    submit: "Kirim pesan",
+    submitting: "Mengirim…",
+    successTitle: "Pesan terkirim.",
+    successBody:
+      "Terima kasih sudah menghubungi — saya akan balas ke email kamu dalam satu hari kerja.",
+    sendAnother: "Kirim pesan lagi",
+    backHome: "Kembali ke beranda",
+    privacyNote:
+      "Data kamu disimpan aman dan hanya untuk balas pesan ini. Tidak ada newsletter, tidak diberikan ke pihak ketiga.",
+    failed: "Gagal mengirim pesan. Coba lagi sebentar lagi.",
   },
   caseStudy: {
     eyebrow: "Studi Kasus",

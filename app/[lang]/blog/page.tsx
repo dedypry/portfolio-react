@@ -11,6 +11,8 @@ import ScrollProgress from "@/components/ScrollProgress";
 import { isLanguage, type Language } from "@/i18n/config";
 import { getProfile, getPublishedBlogs } from "@/lib/queries";
 
+import { BlogStats } from "./_components/BlogStats";
+
 export const dynamic = "force-dynamic";
 
 const LABELS = {
@@ -140,6 +142,16 @@ export default async function BlogIndexPage({
                         ))}
                       </div>
                     )}
+                    <div className="mt-4 border-t border-white/5 pt-3">
+                      <BlogStats
+                        viewCount={post.viewCount}
+                        favoriteCount={post.favoriteCount}
+                        shareCount={post.shareCount}
+                        commentCount={post.commentCount}
+                        lang={lang}
+                        variant="compact"
+                      />
+                    </div>
                   </div>
                 </Link>
               </li>
