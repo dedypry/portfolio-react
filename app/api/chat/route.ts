@@ -63,16 +63,22 @@ export async function POST(req: Request): Promise<Response> {
       parts: [{ text: msg.content.slice(0, MAX_MESSAGE_CHARS) }],
     }));
 
-  if (safeHistory.length === 0 || safeHistory[0].role !== "user") {
+  // Gemini requires history to start with a user message. Be defensive against
+  // stale browser histories or custom clients that accidentally send an
+  // assistant-only conversation.
+  const firstUserIndex = safeHistory.findIndex((entry) => entry.role === "user");
+  const normalizedHistory = firstUserIndex === -1 ? [] : safeHistory.slice(firstUserIndex);
+
+  if (normalizedHistory.length === 0) {
     return jsonError(400, "First message must come from the visitor.");
   }
 
-  const lastEntry = safeHistory[safeHistory.length - 1];
+  const lastEntry = normalizedHistory[normalizedHistory.length - 1];
   if (lastEntry.role !== "user") {
     return jsonError(400, "Last message must come from the visitor.");
   }
 
-  const history = safeHistory.slice(0, -1);
+  const history = normalizedHistory.slice(0, -1);
   const lastUserText = lastEntry.parts[0].text;
 
   const modelName = process.env.GEMINI_MODEL || "gemini-2.0-flash";

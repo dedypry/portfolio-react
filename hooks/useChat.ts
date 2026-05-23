@@ -4,8 +4,8 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { ChatMessage } from "@/types/chat";
 import type { Language } from "@/i18n";
 
-const STORAGE_KEY = "dedypry.chat.history";
-const STORAGE_LANG_KEY = "dedypry.chat.lang";
+const STORAGE_KEY = "dedypry.chat.history.v2";
+const STORAGE_LANG_KEY = "dedypry.chat.lang.v2";
 const COOLDOWN_MS = 1500;
 const ERROR_MARKER = "__ERROR__:";
 
@@ -28,13 +28,21 @@ function safeLoadHistory(currentLang: Language): {
       // Different language than the saved chat — discard stale history.
       return { messages: [], lang: null };
     }
+    const validMessages = parsed.filter(
+      (m) =>
+        m &&
+        typeof m.content === "string" &&
+        (m.role === "user" || m.role === "assistant")
+    );
+
+    // Gemini requires chat history to begin with a user message. Older builds
+    // could leave an assistant-only error message in localStorage, so discard
+    // leading assistant messages when restoring a conversation.
+    const firstUserIndex = validMessages.findIndex((m) => m.role === "user");
+    const messages = firstUserIndex === -1 ? [] : validMessages.slice(firstUserIndex);
+
     return {
-      messages: parsed.filter(
-        (m) =>
-          m &&
-          typeof m.content === "string" &&
-          (m.role === "user" || m.role === "assistant")
-      ),
+      messages,
       lang: storedLang as Language | null,
     };
   } catch {
@@ -97,6 +105,8 @@ export function useChat({ lang, errorRateLimit, errorGeneric }: UseChatOptions) 
     setIsStreaming(false);
     if (typeof window !== "undefined") {
       window.localStorage.removeItem(STORAGE_KEY);
+      window.localStorage.removeItem("dedypry.chat.history");
+      window.localStorage.removeItem("dedypry.chat.lang");
     }
   }, []);
 
