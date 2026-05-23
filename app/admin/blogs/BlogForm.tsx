@@ -7,6 +7,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import slugify from "slugify";
 
 import { blogSchema, type BlogInput } from "@/lib/validators";
+import type { Language } from "@/i18n/config";
 
 import { FormCard } from "../_components/FormCard";
 import { FormActions } from "../_components/FormActions";
@@ -15,6 +16,13 @@ import { LocaleTabs } from "../_components/LocaleTabs";
 import { Editor } from "../_components/Editor";
 import { ImageUpload } from "../_components/ImageUpload";
 import { TagInput } from "../_components/TagInput";
+import {
+  AiGenerateButton,
+  AiImproveButton,
+  AiTranslateAllButton,
+  AiTranslateButton,
+} from "../_components/AiAssist";
+import type { FieldType } from "../_components/aiClient";
 
 interface BlogFormProps {
   initial: BlogInput;
@@ -25,15 +33,17 @@ interface BlogFormProps {
 const toSlug = (text: string) =>
   slugify(text, { lower: true, strict: true, trim: true });
 
+const I18N_FIELDS = [
+  { key: "title", fieldType: "blog.title" as FieldType },
+  { key: "excerpt", fieldType: "blog.excerpt" as FieldType },
+  { key: "content", fieldType: "blog.content" as FieldType },
+] as const;
+
 export function BlogForm({ initial, mode, onSubmit }: BlogFormProps) {
   const router = useRouter();
   const [error, setError] = useState<string>();
   const [success, setSuccess] = useState<string>();
 
-  // Track whether the slug should keep auto-syncing with the title.
-  // - Create mode: ON until the user types into the slug field manually.
-  // - Edit mode:   OFF by default to preserve existing URLs of published
-  //                posts. The user can re-enable via "Reset to auto" button.
   const [autoSlug, setAutoSlug] = useState(mode === "create");
 
   const {
@@ -41,6 +51,7 @@ export function BlogForm({ initial, mode, onSubmit }: BlogFormProps) {
     handleSubmit,
     control,
     setValue,
+    getValues,
     watch,
     formState: { errors, isSubmitting },
   } = useForm<BlogInput>({
@@ -50,7 +61,6 @@ export function BlogForm({ initial, mode, onSubmit }: BlogFormProps) {
 
   const titleEn = watch("translations.en.title");
 
-  // Auto-sync slug from English title while autoSlug is enabled.
   useEffect(() => {
     if (!autoSlug) return;
     const next = titleEn ? toSlug(titleEn) : "";
@@ -67,6 +77,19 @@ export function BlogForm({ initial, mode, onSubmit }: BlogFormProps) {
         shouldValidate: true,
       });
     }
+  };
+
+  /** Apply AI output to a translations.<lang>.<key> field. */
+  const applyToField = (
+    lang: Language,
+    key: (typeof I18N_FIELDS)[number]["key"],
+    text: string
+  ) => {
+    setValue(`translations.${lang}.${key}`, text, {
+      shouldDirty: true,
+      shouldTouch: true,
+      shouldValidate: true,
+    });
   };
 
   const submit = async (values: BlogInput) => {
@@ -93,8 +116,6 @@ export function BlogForm({ initial, mode, onSubmit }: BlogFormProps) {
               required
               {...slugReg}
               onChange={(e) => {
-                // Any manual keystroke disables auto-sync so we don't fight
-                // the user. They can re-enable via the button below.
                 if (autoSlug) setAutoSlug(false);
                 slugReg.onChange(e);
               }}
@@ -155,50 +176,184 @@ export function BlogForm({ initial, mode, onSubmit }: BlogFormProps) {
 
       <FormCard
         title="Content"
-        description="Title, excerpt, and body for each language."
+        description="Title, excerpt, and body for each language. Use the AI buttons to draft, polish, or translate."
       >
         <LocaleTabs
-          render={(lang) => (
-            <>
-              <TextField
-                label="Title"
-                required
-                placeholder="The headline visitors see"
-                {...register(`translations.${lang}.title`)}
-                error={errors.translations?.[lang]?.title?.message}
-              />
-              <TextArea
-                label="Excerpt"
-                rows={3}
-                required
-                placeholder="One-paragraph summary shown on the blog list."
-                {...register(`translations.${lang}.excerpt`)}
-                error={errors.translations?.[lang]?.excerpt?.message}
-              />
+          render={(lang) => {
+            const otherLang: Language = lang === "en" ? "id" : "en";
 
-              <div className="space-y-1.5">
-                <span className="block text-xs font-medium uppercase tracking-wider text-slate-300">
-                  Body <span className="text-rose-400">*</span>
-                </span>
-                <Controller
-                  control={control}
-                  name={`translations.${lang}.content`}
-                  render={({ field }) => (
-                    <Editor
-                      value={field.value ?? ""}
-                      onChange={field.onChange}
-                      placeholder="Start writing…"
-                    />
-                  )}
+            return (
+              <>
+                <div className="flex flex-wrap items-center gap-2 rounded-lg border border-indigo-400/20 bg-indigo-500/5 px-3 py-2">
+                  <span className="text-[11px] uppercase tracking-wider text-indigo-300">
+                    AI tools
+                  </span>
+                  <AiTranslateAllButton
+                    getSource={() =>
+                      Object.fromEntries(
+                        I18N_FIELDS.map(({ key, fieldType }) => [
+                          key,
+                          {
+                            value:
+                              getValues(
+                                `translations.${otherLang}.${key}`
+                              ) ?? "",
+                            fieldType,
+                          },
+                        ])
+                      )
+                    }
+                    fromLang={otherLang}
+                    toLang={lang}
+                    onResult={(id, text) =>
+                      applyToField(
+                        lang,
+                        id as (typeof I18N_FIELDS)[number]["key"],
+                        text
+                      )
+                    }
+                  />
+                </div>
+
+                <TextField
+                  label="Title"
+                  required
+                  placeholder="The headline visitors see"
+                  {...register(`translations.${lang}.title`)}
+                  error={errors.translations?.[lang]?.title?.message}
+                  actions={
+                    <>
+                      <AiImproveButton
+                        getText={() =>
+                          getValues(`translations.${lang}.title`) ?? ""
+                        }
+                        lang={lang}
+                        fieldType="blog.title"
+                        onResult={(text) => applyToField(lang, "title", text)}
+                      />
+                      <AiTranslateButton
+                        getSourceText={() =>
+                          getValues(`translations.${otherLang}.title`) ?? ""
+                        }
+                        fromLang={otherLang}
+                        toLang={lang}
+                        fieldType="blog.title"
+                        onResult={(text) => applyToField(lang, "title", text)}
+                      />
+                    </>
+                  }
                 />
-                {errors.translations?.[lang]?.content && (
-                  <p className="text-xs text-rose-400">
-                    {errors.translations[lang]?.content?.message}
-                  </p>
-                )}
-              </div>
-            </>
-          )}
+
+                <TextArea
+                  label="Excerpt"
+                  rows={3}
+                  required
+                  placeholder="One-paragraph summary shown on the blog list."
+                  {...register(`translations.${lang}.excerpt`)}
+                  error={errors.translations?.[lang]?.excerpt?.message}
+                  actions={
+                    <>
+                      <AiImproveButton
+                        getText={() =>
+                          getValues(`translations.${lang}.excerpt`) ?? ""
+                        }
+                        lang={lang}
+                        fieldType="blog.excerpt"
+                        onResult={(text) =>
+                          applyToField(lang, "excerpt", text)
+                        }
+                      />
+                      <AiGenerateButton
+                        label="From title"
+                        getContext={() => ({
+                          title: getValues(`translations.${lang}.title`),
+                          tags: getValues("tags"),
+                        })}
+                        lang={lang}
+                        fieldType="blog.excerpt"
+                        onResult={(text) =>
+                          applyToField(lang, "excerpt", text)
+                        }
+                        requireKeys={["title"]}
+                      />
+                      <AiTranslateButton
+                        getSourceText={() =>
+                          getValues(`translations.${otherLang}.excerpt`) ?? ""
+                        }
+                        fromLang={otherLang}
+                        toLang={lang}
+                        fieldType="blog.excerpt"
+                        onResult={(text) =>
+                          applyToField(lang, "excerpt", text)
+                        }
+                      />
+                    </>
+                  }
+                />
+
+                <div className="space-y-1.5">
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="block text-xs font-medium uppercase tracking-wider text-slate-300">
+                      Body <span className="text-rose-400">*</span>
+                    </span>
+                    <span className="flex items-center gap-1">
+                      <AiImproveButton
+                        getText={() =>
+                          getValues(`translations.${lang}.content`) ?? ""
+                        }
+                        lang={lang}
+                        fieldType="blog.content"
+                        onResult={(text) =>
+                          applyToField(lang, "content", text)
+                        }
+                      />
+                      <AiGenerateButton
+                        label="Draft from title + excerpt"
+                        getContext={() => ({
+                          title: getValues(`translations.${lang}.title`),
+                          excerpt: getValues(`translations.${lang}.excerpt`),
+                          tags: getValues("tags"),
+                        })}
+                        lang={lang}
+                        fieldType="blog.content"
+                        onResult={(text) =>
+                          applyToField(lang, "content", text)
+                        }
+                        requireKeys={["title", "excerpt"]}
+                      />
+                      <AiTranslateButton
+                        getSourceText={() =>
+                          getValues(`translations.${otherLang}.content`) ?? ""
+                        }
+                        fromLang={otherLang}
+                        toLang={lang}
+                        fieldType="blog.content"
+                        onResult={(text) =>
+                          applyToField(lang, "content", text)
+                        }
+                      />
+                    </span>
+                  </div>
+                  <Controller
+                    control={control}
+                    name={`translations.${lang}.content`}
+                    render={({ field }) => (
+                      <Editor
+                        value={field.value ?? ""}
+                        onChange={field.onChange}
+                        placeholder="Start writing…"
+                      />
+                    )}
+                  />
+                  {errors.translations?.[lang]?.content && (
+                    <p className="text-xs text-rose-400">
+                      {errors.translations[lang]?.content?.message}
+                    </p>
+                  )}
+                </div>
+              </>
+            );
+          }}
         />
       </FormCard>
 

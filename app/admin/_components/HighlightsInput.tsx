@@ -8,6 +8,19 @@ interface HighlightsInputProps {
   label?: string;
   hint?: string;
   error?: string;
+  /**
+   * Optional toolbar rendered next to the label (e.g. AI bulk actions).
+   */
+  toolbar?: React.ReactNode;
+  /**
+   * Optional per-row actions. Receives the row index + current value and
+   * a setter callback. Useful for "improve this bullet with AI" buttons.
+   */
+  renderRowActions?: (args: {
+    index: number;
+    value: string;
+    onChange: (next: string) => void;
+  }) => React.ReactNode;
 }
 
 export function HighlightsInput({
@@ -16,6 +29,8 @@ export function HighlightsInput({
   label,
   hint,
   error,
+  toolbar,
+  renderRowActions,
 }: HighlightsInputProps) {
   const update = (idx: number, text: string) => {
     onChange(value.map((item, i) => (i === idx ? text : item)));
@@ -33,18 +48,21 @@ export function HighlightsInput({
   return (
     <div className="space-y-1.5">
       {label && (
-        <div className="flex items-center justify-between">
+        <div className="flex flex-wrap items-center justify-between gap-2">
           <span className="block text-xs font-medium uppercase tracking-wider text-slate-300">
             {label}
           </span>
-          <button
-            type="button"
-            onClick={add}
-            className="inline-flex items-center gap-1 text-xs text-indigo-300 hover:text-indigo-200"
-          >
-            <FaPlus className="h-2.5 w-2.5" />
-            Add
-          </button>
+          <div className="flex flex-wrap items-center gap-1.5">
+            {toolbar}
+            <button
+              type="button"
+              onClick={add}
+              className="inline-flex items-center gap-1 text-xs text-indigo-300 hover:text-indigo-200"
+            >
+              <FaPlus className="h-2.5 w-2.5" />
+              Add
+            </button>
+          </div>
         </div>
       )}
 
@@ -83,14 +101,21 @@ export function HighlightsInput({
               placeholder={`Highlight ${idx + 1}`}
             />
 
-            <button
-              type="button"
-              onClick={() => remove(idx)}
-              className="mt-1 grid h-6 w-6 place-items-center rounded-md text-slate-500 hover:bg-rose-500/10 hover:text-rose-300"
-              aria-label="Remove"
-            >
-              <FaTimes className="h-3 w-3" />
-            </button>
+            <div className="flex flex-col items-end gap-1 pt-1">
+              {renderRowActions?.({
+                index: idx,
+                value: highlight,
+                onChange: (next) => update(idx, next),
+              })}
+              <button
+                type="button"
+                onClick={() => remove(idx)}
+                className="grid h-6 w-6 place-items-center rounded-md text-slate-500 hover:bg-rose-500/10 hover:text-rose-300"
+                aria-label="Remove"
+              >
+                <FaTimes className="h-3 w-3" />
+              </button>
+            </div>
           </div>
         ))}
 

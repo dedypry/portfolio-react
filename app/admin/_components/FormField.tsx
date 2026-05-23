@@ -11,6 +11,29 @@ interface BaseProps {
   error?: string;
   required?: boolean;
   className?: string;
+  /**
+   * Optional content rendered to the right of the label (e.g. AI assist
+   * buttons). Stays vertically aligned with the label on the same row.
+   */
+  actions?: React.ReactNode;
+}
+
+function FieldHeader({
+  label,
+  required,
+  actions,
+}: Pick<BaseProps, "label" | "required" | "actions">) {
+  return (
+    <span className="flex items-center justify-between gap-2">
+      <span className="flex items-center gap-1 text-xs font-medium uppercase tracking-wider text-slate-300">
+        {label}
+        {required && <span className="text-rose-400">*</span>}
+      </span>
+      {actions && (
+        <span className="flex items-center gap-1 normal-case">{actions}</span>
+      )}
+    </span>
+  );
 }
 
 interface TextFieldProps
@@ -19,15 +42,12 @@ interface TextFieldProps
 
 export const TextField = forwardRef<HTMLInputElement, TextFieldProps>(
   function TextField(
-    { label, hint, error, required, className, ...rest },
+    { label, hint, error, required, className, actions, ...rest },
     ref
   ) {
     return (
       <label className={["block space-y-1.5", className].filter(Boolean).join(" ")}>
-        <span className="flex items-center gap-1 text-xs font-medium uppercase tracking-wider text-slate-300">
-          {label}
-          {required && <span className="text-rose-400">*</span>}
-        </span>
+        <FieldHeader label={label} required={required} actions={actions} />
         <input ref={ref} className={fieldClass} {...rest} />
         {hint && !error && <span className="block text-xs text-slate-500">{hint}</span>}
         {error && <span className="block text-xs text-rose-400">{error}</span>}
@@ -41,13 +61,13 @@ interface TextAreaProps
     Omit<TextareaHTMLAttributes<HTMLTextAreaElement>, "className"> {}
 
 export const TextArea = forwardRef<HTMLTextAreaElement, TextAreaProps>(
-  function TextArea({ label, hint, error, required, className, ...rest }, ref) {
+  function TextArea(
+    { label, hint, error, required, className, actions, ...rest },
+    ref
+  ) {
     return (
       <label className={["block space-y-1.5", className].filter(Boolean).join(" ")}>
-        <span className="flex items-center gap-1 text-xs font-medium uppercase tracking-wider text-slate-300">
-          {label}
-          {required && <span className="text-rose-400">*</span>}
-        </span>
+        <FieldHeader label={label} required={required} actions={actions} />
         <textarea
           ref={ref}
           rows={4}

@@ -379,31 +379,31 @@ export const id: TranslationShape = {
     subtitle: "Asisten AI yang dilatih dari portofolio-nya",
     online: "Online",
     greeting:
-      "Halo! Saya asisten AI Dedy. Tanya saja tentang pengalaman, proyek, stack, ketersediaan, atau cara menghubunginya.",
+      "Halo 👋 aku bot yang Dedy taruh di sini buat nemenin kamu mumpung dia lagi sibuk ngoding. Tanya aja soal project, stack, atau ketersediaan dia — santai aja, ga usah formal.",
     suggestionLabel: "Coba tanya:",
     suggestions: [
       {
-        label: "Latar belakang",
-        prompt: "Beri saya gambaran singkat tentang latar belakang Dedy.",
+        label: "TL;DR",
+        prompt: "Ceritain singkat dong, Dedy ini siapa sih?",
       },
       {
-        label: "Karya terbaik",
-        prompt: "Apa proyek terbaru Dedy yang paling mengesankan dan kenapa?",
+        label: "Project paling keren",
+        prompt: "Project Dedy yang paling keren belakangan ini apa? Kenapa?",
       },
       {
-        label: "Stack pilihan",
-        prompt: "Stack favorit Dedy apa saja dan kenapa?",
+        label: "Stack favoritnya",
+        prompt: "Stack andalan Dedy apa aja, dan yang dia suka banget yang mana?",
       },
       {
-        label: "Mau hire",
-        prompt: "Apakah Dedy terbuka untuk peluang baru? Bagaimana cara menghubunginya?",
+        label: "Mau ngajak kerja",
+        prompt: "Dedy lagi open buat opportunity baru ga? Cara paling cepet ngehubungin dia gimana?",
       },
     ],
-    inputPlaceholder: "Tanya apa saja tentang Dedy…",
+    inputPlaceholder: "Tanya apa aja soal Dedy…",
     send: "Kirim",
     stop: "Hentikan",
-    reset: "Mulai obrolan baru",
-    typing: "Sedang berpikir…",
+    reset: "Mulai dari awal",
+    typing: "Lagi mikir…",
     poweredBy: "Didukung Gemini",
     disclaimer: "Jawaban AI bisa keliru — verifikasi info penting.",
     errorGeneric:

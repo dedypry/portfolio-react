@@ -87,8 +87,10 @@ export async function POST(req: Request): Promise<Response> {
     model: modelName,
     systemInstruction: buildSystemPrompt(lang),
     generationConfig: {
-      temperature: 0.4,
-      topP: 0.9,
+      // Higher temperature = more personality. We pair it with a strict
+      // system prompt so the model stays factual but speaks more naturally.
+      temperature: 0.85,
+      topP: 0.95,
       maxOutputTokens: 700,
     },
   });
