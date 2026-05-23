@@ -7,6 +7,8 @@
  *
  * Run via: `npm run db:seed`
  */
+import "dotenv/config";
+
 import { PrismaClient, type ExperienceType as DbExperienceType } from "@prisma/client";
 import bcrypt from "bcryptjs";
 

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -22,10 +22,19 @@ interface BlogFormProps {
   onSubmit: (input: BlogInput) => Promise<void>;
 }
 
+const toSlug = (text: string) =>
+  slugify(text, { lower: true, strict: true, trim: true });
+
 export function BlogForm({ initial, mode, onSubmit }: BlogFormProps) {
   const router = useRouter();
   const [error, setError] = useState<string>();
   const [success, setSuccess] = useState<string>();
+
+  // Track whether the slug should keep auto-syncing with the title.
+  // - Create mode: ON until the user types into the slug field manually.
+  // - Edit mode:   OFF by default to preserve existing URLs of published
+  //                posts. The user can re-enable via "Reset to auto" button.
+  const [autoSlug, setAutoSlug] = useState(mode === "create");
 
   const {
     register,
@@ -41,10 +50,23 @@ export function BlogForm({ initial, mode, onSubmit }: BlogFormProps) {
 
   const titleEn = watch("translations.en.title");
 
-  const handleAutoSlug = () => {
-    if (!titleEn) return;
-    const slug = slugify(titleEn, { lower: true, strict: true });
-    setValue("slug", slug, { shouldDirty: true, shouldValidate: true });
+  // Auto-sync slug from English title while autoSlug is enabled.
+  useEffect(() => {
+    if (!autoSlug) return;
+    const next = titleEn ? toSlug(titleEn) : "";
+    setValue("slug", next, { shouldDirty: true, shouldValidate: false });
+  }, [titleEn, autoSlug, setValue]);
+
+  const slugReg = register("slug");
+
+  const handleResetAutoSlug = () => {
+    setAutoSlug(true);
+    if (titleEn) {
+      setValue("slug", toSlug(titleEn), {
+        shouldDirty: true,
+        shouldValidate: true,
+      });
+    }
   };
 
   const submit = async (values: BlogInput) => {
@@ -69,16 +91,27 @@ export function BlogForm({ initial, mode, onSubmit }: BlogFormProps) {
             <TextField
               label="Slug"
               required
-              {...register("slug")}
+              {...slugReg}
+              onChange={(e) => {
+                // Any manual keystroke disables auto-sync so we don't fight
+                // the user. They can re-enable via the button below.
+                if (autoSlug) setAutoSlug(false);
+                slugReg.onChange(e);
+              }}
               error={errors.slug?.message}
-              hint="lowercase, hyphenated. Used in the URL."
+              hint={
+                autoSlug
+                  ? "Auto-generated from the English title."
+                  : "lowercase, hyphenated. Used in the URL."
+              }
             />
             <button
               type="button"
-              onClick={handleAutoSlug}
-              className="mt-1 text-xs text-indigo-300 hover:text-indigo-200"
+              onClick={handleResetAutoSlug}
+              className="mt-1 text-xs text-indigo-300 hover:text-indigo-200 disabled:opacity-50"
+              disabled={autoSlug}
             >
-              Auto-generate from English title
+              {autoSlug ? "Auto-syncing with title…" : "Reset to auto from title"}
             </button>
           </div>
 
