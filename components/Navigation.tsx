@@ -2,8 +2,9 @@
 
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { Download, Menu, X } from "lucide-react";
-import { profile } from "@/data/portfolio";
 import { useActiveSection } from "@/hooks/useActiveSection";
 import { downloadCV } from "@/utils/downloadCV";
 import { useT } from "@/i18n/useT";
@@ -25,9 +26,17 @@ export default function Navigation() {
   const [open, setOpen] = useState(false);
   const [downloading, setDownloading] = useState(false);
   const { t, lang } = useT();
+  const pathname = usePathname() ?? "";
+  const isOnHome =
+    pathname === `/${lang}` || pathname === `/${lang}/` || pathname === "/";
   const active = useActiveSection(SECTION_IDS, 140);
 
-  const links = [
+  // Section anchors only work on the homepage; from other routes we'd need to
+  // navigate back. Build hrefs accordingly.
+  const sectionHref = (id: string) =>
+    isOnHome ? `#${id}` : `/${lang}#${id}`;
+
+  const sectionLinks = [
     { id: "about", label: t.nav.about },
     { id: "experience", label: t.nav.experience },
     { id: "projects", label: t.nav.projects },
@@ -52,6 +61,8 @@ export default function Navigation() {
     }
   };
 
+  const isBlogActive = pathname.startsWith(`/${lang}/blog`);
+
   return (
     <header
       className={`fixed inset-x-0 top-0 z-50 transition-all duration-300 ${
@@ -61,23 +72,23 @@ export default function Navigation() {
       }`}
     >
       <nav className="container-x flex h-16 items-center justify-between gap-4">
-        <a
-          href="#top"
+        <Link
+          href={`/${lang}`}
           className="group inline-flex items-center gap-2 font-display text-sm font-bold tracking-tight"
         >
           <span className="grid h-8 w-8 place-items-center rounded-lg bg-gradient-to-br from-accent to-cyan-neon text-ink-950 shadow-glow transition-transform group-hover:rotate-3">
-            {profile.initials}
+            DP
           </span>
-          <span className="hidden sm:inline">{profile.name}</span>
-        </a>
+          <span className="hidden sm:inline">Dedy Priyatna</span>
+        </Link>
 
         <ul className="hidden items-center gap-1 md:flex">
-          {links.map((l) => {
-            const isActive = active === l.id;
+          {sectionLinks.map((l) => {
+            const isActive = isOnHome && active === l.id;
             return (
               <li key={l.id} className="relative">
                 <a
-                  href={`#${l.id}`}
+                  href={sectionHref(l.id)}
                   className={`relative inline-flex rounded-full px-4 py-2 text-sm transition-colors ${
                     isActive ? "text-white" : "text-white/60 hover:text-white"
                   }`}
@@ -101,6 +112,23 @@ export default function Navigation() {
               </li>
             );
           })}
+          <li className="relative">
+            <Link
+              href={`/${lang}/blog`}
+              className={`relative inline-flex rounded-full px-4 py-2 text-sm transition-colors ${
+                isBlogActive ? "text-white" : "text-white/60 hover:text-white"
+              }`}
+            >
+              {isBlogActive && (
+                <motion.span
+                  layoutId="nav-pill"
+                  className="absolute inset-0 -z-10 rounded-full bg-white/[0.07] ring-1 ring-white/10"
+                  transition={{ type: "spring", stiffness: 380, damping: 32 }}
+                />
+              )}
+              {t.nav.blog}
+            </Link>
+          </li>
         </ul>
 
         <div className="flex items-center gap-2">
@@ -118,7 +146,7 @@ export default function Navigation() {
             {downloading ? t.nav.generating : t.nav.downloadCV}
           </button>
           <a
-            href="#contact"
+            href={sectionHref("contact")}
             className="btn-primary hidden !px-5 !py-2 text-xs md:inline-flex"
           >
             {t.nav.letsTalk}
@@ -137,12 +165,12 @@ export default function Navigation() {
       {open && (
         <div className="border-t border-white/5 bg-ink-950/95 backdrop-blur-xl md:hidden">
           <div className="container-x flex flex-col gap-1 py-3">
-            {links.map((l) => {
-              const isActive = active === l.id;
+            {sectionLinks.map((l) => {
+              const isActive = isOnHome && active === l.id;
               return (
                 <a
                   key={l.id}
-                  href={`#${l.id}`}
+                  href={sectionHref(l.id)}
                   onClick={() => setOpen(false)}
                   className={`flex items-center justify-between rounded-lg px-3 py-3 text-sm transition-colors ${
                     isActive
@@ -157,6 +185,20 @@ export default function Navigation() {
                 </a>
               );
             })}
+            <Link
+              href={`/${lang}/blog`}
+              onClick={() => setOpen(false)}
+              className={`flex items-center justify-between rounded-lg px-3 py-3 text-sm transition-colors ${
+                isBlogActive
+                  ? "bg-white/[0.06] text-white"
+                  : "text-white/80 hover:bg-white/5"
+              }`}
+            >
+              {t.nav.blog}
+              {isBlogActive && (
+                <span className="h-1.5 w-1.5 rounded-full bg-gradient-to-r from-accent to-cyan-neon shadow-[0_0_10px_rgba(124,92,255,0.9)]" />
+              )}
+            </Link>
 
             <div className="mt-2 px-2">
               <LanguageSwitcher variant="full" />
@@ -179,7 +221,7 @@ export default function Navigation() {
               {downloading ? t.nav.generating : t.nav.downloadCV}
             </button>
             <a
-              href="#contact"
+              href={sectionHref("contact")}
               onClick={() => setOpen(false)}
               className="btn-primary mt-2"
             >

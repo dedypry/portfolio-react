@@ -15,6 +15,7 @@ export const id: TranslationShape = {
     projects: "Proyek",
     skills: "Keahlian",
     contact: "Kontak",
+    blog: "Blog",
     letsTalk: "Mari bicara",
     downloadCV: "Unduh CV",
     generating: "Memproses…",

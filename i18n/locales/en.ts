@@ -33,6 +33,7 @@ export type TranslationShape = {
     projects: string;
     skills: string;
     contact: string;
+    blog: string;
     letsTalk: string;
     downloadCV: string;
     generating: string;
@@ -192,6 +193,7 @@ export const en: TranslationShape = {
     projects: "Projects",
     skills: "Skills",
     contact: "Contact",
+    blog: "Blog",
     letsTalk: "Let's talk",
     downloadCV: "Download CV",
     generating: "Generating…",

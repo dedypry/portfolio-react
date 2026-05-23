@@ -4,10 +4,14 @@ import { ArrowRight, Mail, MapPin, Phone } from "lucide-react";
 import { FaGithub, FaLinkedin } from "react-icons/fa";
 import Reveal from "./Reveal";
 import SectionHeader from "./SectionHeader";
-import { profile } from "@/data/portfolio";
 import { useT } from "@/i18n/useT";
+import type { ProfileView } from "@/lib/queries";
 
-export default function Contact() {
+interface ContactProps {
+  profile: ProfileView;
+}
+
+export default function Contact({ profile }: ContactProps) {
   const { t } = useT();
   return (
     <section id="contact" className="container-x py-28">

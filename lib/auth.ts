@@ -6,22 +6,18 @@ import { z } from "zod";
 
 import { prisma } from "@/lib/prisma";
 
+type AppRole = "ADMIN" | "EDITOR";
+
 declare module "next-auth" {
   interface Session {
     user: {
       id: string;
-      role: "ADMIN" | "EDITOR";
+      role: AppRole;
     } & DefaultSession["user"];
   }
 
   interface User {
-    role?: "ADMIN" | "EDITOR";
-  }
-}
-
-declare module "next-auth/jwt" {
-  interface JWT {
-    role?: "ADMIN" | "EDITOR";
+    role?: AppRole;
   }
 }
 
@@ -44,6 +40,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     signIn: "/login",
     error: "/login",
   },
+  secret:"dedypry",
   providers: [
     Credentials({
       name: "Email & Password",
@@ -77,14 +74,15 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   callbacks: {
     jwt: async ({ token, user }) => {
       if (user) {
-        token.role = user.role;
+        (token as { role?: AppRole }).role = user.role;
         token.sub = user.id;
       }
       return token;
     },
     session: async ({ session, token }) => {
       if (token.sub) session.user.id = token.sub;
-      if (token.role) session.user.role = token.role;
+      const role = (token as { role?: AppRole }).role;
+      if (role) session.user.role = role;
       return session;
     },
   },

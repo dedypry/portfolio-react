@@ -17,7 +17,7 @@ module.exports = {
       name: "dedypry",
       cwd: __dirname,
       script: "node_modules/next/dist/bin/next",
-      args: "start --hostname 127.0.0.1 --port 3450",
+      args: "start --hostname 0.0.0.0 --port 3450",
       instances: 1,
       exec_mode: "fork",
       autorestart: true,

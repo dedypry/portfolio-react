@@ -4,16 +4,11 @@ import { useMemo, useState } from "react";
 import { ArrowUpRight } from "lucide-react";
 import Reveal from "./Reveal";
 import SectionHeader from "./SectionHeader";
-import {
-  projectCategories,
-  projectIds,
-  projectsMeta,
-  type ProjectAccent,
-  type ProjectCategory,
-} from "@/data/portfolio";
 import { useT } from "@/i18n/useT";
+import type { ProjectView } from "@/lib/queries";
+import type { ProjectAccent, ProjectCategory } from "@/data/portfolio";
 
-const accentMap: Record<ProjectAccent, string> = {
+const accentMap: Record<string, string> = {
   violet: "from-violet-500/30 via-violet-500/10 to-transparent",
   cyan: "from-cyan-400/30 via-cyan-400/10 to-transparent",
   emerald: "from-emerald-400/30 via-emerald-400/10 to-transparent",
@@ -21,7 +16,7 @@ const accentMap: Record<ProjectAccent, string> = {
   rose: "from-rose-400/30 via-rose-400/10 to-transparent",
 };
 
-const dotMap: Record<ProjectAccent, string> = {
+const dotMap: Record<string, string> = {
   violet: "bg-violet-400",
   cyan: "bg-cyan-300",
   emerald: "bg-emerald-400",
@@ -29,22 +24,35 @@ const dotMap: Record<ProjectAccent, string> = {
   rose: "bg-rose-400",
 };
 
-type Filter = "all" | ProjectCategory;
+const FALLBACK_ACCENT: ProjectAccent = "violet";
 
-export default function Projects() {
+type Filter = "all" | string;
+
+interface ProjectsProps {
+  items: ProjectView[];
+}
+
+export default function Projects({ items }: ProjectsProps) {
   const { t } = useT();
   const [filter, setFilter] = useState<Filter>("all");
 
-  const filteredIds = useMemo(() => {
-    if (filter === "all") return projectIds;
-    return projectIds.filter((id) => projectsMeta[id].category === filter);
-  }, [filter]);
+  const categories = useMemo(() => {
+    const set = new Set<string>();
+    items.forEach((p) => set.add(p.category));
+    return Array.from(set);
+  }, [items]);
+
+  const filtered = useMemo(() => {
+    if (filter === "all") return items;
+    return items.filter((p) => p.category === filter);
+  }, [filter, items]);
 
   const filterEntries: { key: Filter; label: string }[] = [
     { key: "all", label: t.projects.filters.all },
-    ...projectCategories.map((c) => ({
-      key: c as Filter,
-      label: t.projects.filters[c],
+    ...categories.map((c) => ({
+      key: c,
+      label:
+        t.projects.filters[c as ProjectCategory] ?? c,
     })),
   ];
 
@@ -73,15 +81,14 @@ export default function Projects() {
       </Reveal>
 
       <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-3">
-        {filteredIds.map((id, i) => {
-          const meta = projectsMeta[id];
-          const copy = t.projects.items[id];
+        {filtered.map((item, i) => {
+          const accent = item.accent || FALLBACK_ACCENT;
           return (
-            <Reveal key={id} delay={i * 0.05}>
+            <Reveal key={item.id} delay={i * 0.05}>
               <article className="group relative h-full overflow-hidden rounded-3xl border border-white/10 bg-ink-900/60 p-6 transition-all hover:-translate-y-1 hover:border-white/20">
                 <div
                   className={`pointer-events-none absolute -inset-px -z-10 bg-gradient-to-br opacity-60 transition-opacity duration-500 group-hover:opacity-100 ${
-                    accentMap[meta.accent]
+                    accentMap[accent] ?? accentMap[FALLBACK_ACCENT]
                   }`}
                 />
                 <div className="pointer-events-none absolute inset-0 -z-10 bg-ink-900/80" />
@@ -89,13 +96,14 @@ export default function Projects() {
                 <div className="flex items-center justify-between">
                   <span className="inline-flex items-center gap-2 text-xs uppercase tracking-[0.18em] text-white/50">
                     <span
-                      className={`h-1.5 w-1.5 rounded-full ${dotMap[meta.accent]}`}
+                      className={`h-1.5 w-1.5 rounded-full ${dotMap[accent] ?? dotMap[FALLBACK_ACCENT]}`}
                     />
-                    {t.projects.filters[meta.category]}
+                    {t.projects.filters[item.category as ProjectCategory] ??
+                      item.category}
                   </span>
-                  {meta.link && (
+                  {item.link && (
                     <a
-                      href={meta.link}
+                      href={item.link}
                       target="_blank"
                       rel="noreferrer"
                       aria-label="Open link"
@@ -107,17 +115,17 @@ export default function Projects() {
                 </div>
 
                 <h3 className="mt-5 font-display text-xl font-semibold text-white">
-                  {copy.name}
+                  {item.name}
                 </h3>
                 <p className="mt-1 text-sm font-medium text-white/70">
-                  {copy.tagline}
+                  {item.tagline}
                 </p>
                 <p className="mt-3 text-sm leading-relaxed text-white/60">
-                  {copy.description}
+                  {item.description}
                 </p>
 
                 <div className="mt-5 flex flex-wrap gap-1.5">
-                  {meta.stack.map((s) => (
+                  {item.stack.map((s) => (
                     <span key={s} className="chip">
                       {s}
                     </span>

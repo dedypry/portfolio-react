@@ -5,11 +5,15 @@ import Image from "next/image";
 import { motion } from "framer-motion";
 import { ArrowRight, Download, Mail, Sparkles } from "lucide-react";
 import { FaGithub, FaLinkedin } from "react-icons/fa";
-import { profile } from "@/data/portfolio";
 import { downloadCV } from "@/utils/downloadCV";
 import { useT } from "@/i18n/useT";
+import type { ProfileView } from "@/lib/queries";
 
-export default function Hero() {
+interface HeroProps {
+  profile: ProfileView;
+}
+
+export default function Hero({ profile }: HeroProps) {
   const [downloading, setDownloading] = useState(false);
   const { t, lang } = useT();
 
@@ -61,9 +65,9 @@ export default function Hero() {
               {t.hero.greeting}{" "}
               <span className="gradient-text">{profile.name}</span>.
               <br />
-              {t.hero.headlineLine1}
+              {profile.headlineLine1}
               <span className="relative ml-3 inline-block">
-                <span className="gradient-text">{t.hero.headlineHighlight}</span>
+                <span className="gradient-text">{profile.headlineHighlight}</span>
                 <Sparkles
                   className="absolute -right-7 -top-3 text-cyan-neon"
                   size={22}
@@ -77,7 +81,7 @@ export default function Hero() {
               transition={{ delay: 0.2, duration: 0.7 }}
               className="max-w-2xl text-lg text-white/70 sm:text-xl"
             >
-              {t.about.tagline}
+              {profile.tagline}
             </motion.p>
 
             <motion.div

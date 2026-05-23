@@ -5,5 +5,5 @@ import { DEFAULT_LANGUAGE } from "@/i18n/config";
 // gets through, fall back to the default language so we never render an empty
 // "/" with no providers.
 export default function Root() {
-  redirect(`${process.env.NEXT_PUBLIC_SITE_URL ?? "https://dedypry.site"}/${DEFAULT_LANGUAGE}`);
+  redirect(`/${DEFAULT_LANGUAGE}`);
 }

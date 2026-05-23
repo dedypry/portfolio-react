@@ -50,3 +50,11 @@ node_modules
 # TypeScript
 *.tsbuildinfo
 next-env.d.ts
+
+# Prisma
+/prisma/migrations/
+/.cache/
+
+# User-uploaded media
+/public/uploads/*
+!/public/uploads/.gitkeep

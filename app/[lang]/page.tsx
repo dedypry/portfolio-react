@@ -15,8 +15,17 @@ import Skills from "@/components/Skills";
 import { en } from "@/i18n/locales/en";
 import { id } from "@/i18n/locales/id";
 import { isLanguage, type Language } from "@/i18n/config";
+import {
+  getEducation,
+  getExperiences,
+  getProfile,
+  getProjects,
+  getSkillGroups,
+} from "@/lib/queries";
 
 const META = { en, id };
+
+export const dynamic = "force-dynamic";
 
 export async function generateMetadata({
   params,
@@ -28,8 +37,9 @@ export async function generateMetadata({
   const lang: Language = rawLang;
   const t = META[lang];
 
-  const title = `${t.about.role} · Dedy Priyatna`;
-  const description = t.about.tagline;
+  const profile = await getProfile(lang);
+  const title = `${profile.role} · ${profile.name}`;
+  const description = profile.tagline || t.about.tagline;
 
   return {
     title,
@@ -61,6 +71,15 @@ export default async function Home({
 }) {
   const { lang: rawLang } = await params;
   if (!isLanguage(rawLang)) notFound();
+  const lang: Language = rawLang;
+
+  const [profile, experiences, projects, education, skillGroups] = await Promise.all([
+    getProfile(lang),
+    getExperiences(lang),
+    getProjects(lang),
+    getEducation(lang),
+    getSkillGroups(lang),
+  ]);
 
   return (
     <div className="relative min-h-screen overflow-x-hidden">
@@ -68,15 +87,15 @@ export default async function Home({
       <Navigation />
       <CommandPalette />
       <main>
-        <Hero />
+        <Hero profile={profile} />
         <About />
-        <Experience />
-        <Projects />
+        <Experience items={experiences} />
+        <Projects items={projects} />
         <CaseStudy />
-        <Skills />
-        <Contact />
+        <Skills groups={skillGroups} education={education} />
+        <Contact profile={profile} />
       </main>
-      <Footer />
+      <Footer name={profile.name} />
       <ChatBubble />
     </div>
   );

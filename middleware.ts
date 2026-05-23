@@ -9,12 +9,18 @@ import {
 const LOCALE_COOKIE = "dedypry.lang";
 const LOCALE_HEADER = "x-locale";
 
+/**
+ * Routes that live OUTSIDE the localized `/[lang]` shell. Visited as-is.
+ * Auth.js session validation for `/admin/*` happens in `app/admin/layout.tsx`
+ * (server component) — middleware only takes care of routing.
+ */
+const NON_LOCALIZED_PREFIXES = ["/admin", "/login"];
+
 function detectLocale(request: NextRequest): Language {
   const cookieValue = request.cookies.get(LOCALE_COOKIE)?.value;
   if (cookieValue && isLanguage(cookieValue)) return cookieValue;
 
   const acceptLanguage = request.headers.get("accept-language") || "";
-  // Naive parse: take first preference, match prefix.
   const ranked = acceptLanguage
     .split(",")
     .map((entry) => entry.split(";")[0].trim().toLowerCase());
@@ -29,7 +35,12 @@ function detectLocale(request: NextRequest): Language {
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  // If the URL already starts with a supported locale, just propagate it via header.
+  // Pass-through: admin/login/blog are not locale-prefixed.
+  if (NON_LOCALIZED_PREFIXES.some((prefix) => pathname.startsWith(prefix))) {
+    return NextResponse.next();
+  }
+
+  // If the URL already starts with a supported locale, propagate it via header.
   const localeMatch = pathname.match(/^\/([a-z]{2})(\/|$)/);
   if (localeMatch && isLanguage(localeMatch[1])) {
     const response = NextResponse.next();
@@ -50,7 +61,6 @@ export function middleware(request: NextRequest) {
 }
 
 export const config = {
-  // Run on every page request except API, _next assets, and files with extensions.
   matcher: ["/((?!_next|api|.*\\.).*)"],
 };
 
