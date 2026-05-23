@@ -1,11 +1,16 @@
 import type { jsPDF } from "jspdf";
 import {
-  education,
-  experiences,
+  experienceIds,
+  experiencesMeta,
   profile,
-  projects,
-  skillGroups,
+  projectIds,
+  projectsMeta,
+  skillGroupIds,
+  skillGroupItems,
 } from "../data/portfolio";
+import { en } from "../i18n/locales/en";
+import { id as idLocale } from "../i18n/locales/id";
+import type { Language } from "../i18n";
 
 // A4 in points: 595.28 x 841.89
 const PAGE_W = 595.28;
@@ -28,6 +33,9 @@ const COLOR = {
   chipText: [76, 53, 200] as const,
 };
 
+const LOCALES = { en, id: idLocale };
+type LocaleShape = typeof en;
+
 type Cursor = { y: number };
 
 function setFill(doc: jsPDF, c: readonly [number, number, number]) {
@@ -44,46 +52,23 @@ function ensureSpace(doc: jsPDF, cursor: Cursor, needed: number) {
   if (cursor.y + needed > PAGE_H - MARGIN_BOTTOM) {
     doc.addPage();
     cursor.y = MARGIN_TOP;
-    addPageFooter(doc);
   }
 }
 
-function addPageFooter(doc: jsPDF) {
-  const pageNumber = doc.getNumberOfPages();
-  doc.setFont("helvetica", "normal");
-  doc.setFontSize(8);
-  setText(doc, COLOR.muted);
-  doc.text(
-    `${profile.name}  ·  ${profile.email}`,
-    MARGIN_X,
-    PAGE_H - 24
-  );
-  doc.text(
-    `Page ${pageNumber}`,
-    PAGE_W - MARGIN_X,
-    PAGE_H - 24,
-    { align: "right" }
-  );
-}
-
-function drawHeader(doc: jsPDF, cursor: Cursor) {
-  // Accent top bar
+function drawHeader(doc: jsPDF, cursor: Cursor, t: LocaleShape) {
   setFill(doc, COLOR.accent);
   doc.rect(0, 0, PAGE_W, 8, "F");
 
-  // Name
   doc.setFont("helvetica", "bold");
   doc.setFontSize(28);
   setText(doc, COLOR.ink);
   doc.text(profile.name.toUpperCase(), MARGIN_X, MARGIN_TOP + 4);
 
-  // Role
   doc.setFont("helvetica", "normal");
   doc.setFontSize(12);
   setText(doc, COLOR.accentDark);
-  doc.text(profile.role, MARGIN_X, MARGIN_TOP + 24);
+  doc.text(t.about.role, MARGIN_X, MARGIN_TOP + 24);
 
-  // Contact line
   doc.setFontSize(9);
   setText(doc, COLOR.muted);
   const contact = [
@@ -94,7 +79,6 @@ function drawHeader(doc: jsPDF, cursor: Cursor) {
   ].join("   ·   ");
   doc.text(contact, MARGIN_X, MARGIN_TOP + 40);
 
-  // Divider
   setDraw(doc, COLOR.divider);
   doc.setLineWidth(0.6);
   doc.line(MARGIN_X, MARGIN_TOP + 52, PAGE_W - MARGIN_X, MARGIN_TOP + 52);
@@ -104,7 +88,6 @@ function drawHeader(doc: jsPDF, cursor: Cursor) {
 
 function drawSectionTitle(doc: jsPDF, cursor: Cursor, title: string) {
   ensureSpace(doc, cursor, 28);
-  // Accent bar
   setFill(doc, COLOR.accent);
   doc.rect(MARGIN_X, cursor.y - 8, 3, 12, "F");
 
@@ -149,7 +132,14 @@ function drawWrappedText(
     lineGap = 3,
   } = opts;
 
-  const style = bold && italic ? "bolditalic" : bold ? "bold" : italic ? "italic" : "normal";
+  const style =
+    bold && italic
+      ? "bolditalic"
+      : bold
+      ? "bold"
+      : italic
+      ? "italic"
+      : "normal";
   doc.setFont("helvetica", style);
   doc.setFontSize(fontSize);
   setText(doc, color);
@@ -174,10 +164,8 @@ function drawBullet(doc: jsPDF, cursor: Cursor, text: string) {
   setText(doc, COLOR.text);
 
   const wrapped = doc.splitTextToSize(text, CONTENT_W - indent) as string[];
-
   ensureSpace(doc, cursor, lineHeight * wrapped.length + 2);
 
-  // dot
   setFill(doc, COLOR.accent);
   doc.circle(MARGIN_X + 4, cursor.y - 3, 1.4, "F");
 
@@ -188,79 +176,47 @@ function drawBullet(doc: jsPDF, cursor: Cursor, text: string) {
   cursor.y += 2;
 }
 
-function drawChips(doc: jsPDF, cursor: Cursor, items: string[]) {
-  const padX = 6;
-  const padY = 4;
+/**
+ * Draws a row (or rows) of pill-shaped chips.
+ *
+ * Contract:
+ *   - On entry, `cursor.y` is the TOP edge of the first chip row.
+ *   - On exit,  `cursor.y` is the BOTTOM edge of the last chip row.
+ *   - Caller is responsible for spacing before / after.
+ */
+function drawChips(doc: jsPDF, cursor: Cursor, items: readonly string[]) {
+  const padX = 7;
   const fontSize = 8.2;
+  const rowHeight = 14;
   const gap = 4;
-  const lineHeight = 16;
+  const rowGap = 4;
 
   doc.setFont("helvetica", "normal");
   doc.setFontSize(fontSize);
 
   let x = MARGIN_X;
-  ensureSpace(doc, cursor, lineHeight + 4);
+  ensureSpace(doc, cursor, rowHeight + 4);
 
   for (const item of items) {
     const w = doc.getTextWidth(item) + padX * 2;
     if (x + w > PAGE_W - MARGIN_X) {
-      cursor.y += lineHeight + 2;
-      ensureSpace(doc, cursor, lineHeight);
+      cursor.y += rowHeight + rowGap;
+      ensureSpace(doc, cursor, rowHeight + rowGap);
       x = MARGIN_X;
     }
     setFill(doc, COLOR.chipBg);
-    doc.roundedRect(x, cursor.y - lineHeight + padY, w, lineHeight - 2, 6, 6, "F");
+    doc.roundedRect(x, cursor.y, w, rowHeight, rowHeight / 2, rowHeight / 2, "F");
     setText(doc, COLOR.chipText);
-    doc.text(item, x + padX, cursor.y - 4);
+    doc.text(item, x + padX, cursor.y + rowHeight - 4);
     x += w + gap;
   }
-  cursor.y += 6;
+
+  cursor.y += rowHeight;
 }
 
-function drawExperience(doc: jsPDF, cursor: Cursor) {
-  drawSectionTitle(doc, cursor, "Experience");
-
-  for (const exp of experiences) {
-    ensureSpace(doc, cursor, 60);
-
-    // Role
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(11);
-    setText(doc, COLOR.ink);
-    doc.text(exp.role, MARGIN_X, cursor.y);
-
-    // Period (right-aligned)
-    doc.setFont("helvetica", "normal");
-    doc.setFontSize(9);
-    setText(doc, COLOR.muted);
-    doc.text(exp.period, PAGE_W - MARGIN_X, cursor.y, { align: "right" });
-
-    cursor.y += 14;
-
-    // Company · Location · Type
-    doc.setFont("helvetica", "italic");
-    doc.setFontSize(10);
-    setText(doc, COLOR.accentDark);
-    const meta = `${exp.company}  ·  ${exp.location}  ·  ${exp.type}`;
-    doc.text(meta, MARGIN_X, cursor.y);
-    cursor.y += 12;
-
-    for (const h of exp.highlights) {
-      drawBullet(doc, cursor, h);
-    }
-
-    if (exp.stack && exp.stack.length) {
-      cursor.y += 2;
-      drawChips(doc, cursor, exp.stack);
-    }
-
-    cursor.y += 8;
-  }
-}
-
-function drawSummary(doc: jsPDF, cursor: Cursor) {
-  drawSectionTitle(doc, cursor, "Summary");
-  drawWrappedText(doc, cursor, profile.intro, {
+function drawSummary(doc: jsPDF, cursor: Cursor, t: LocaleShape) {
+  drawSectionTitle(doc, cursor, t.pdf.summary);
+  drawWrappedText(doc, cursor, t.about.description, {
     fontSize: 10.5,
     lineGap: 4,
     color: COLOR.text,
@@ -268,35 +224,98 @@ function drawSummary(doc: jsPDF, cursor: Cursor) {
   cursor.y += 4;
 }
 
-function drawSkills(doc: jsPDF, cursor: Cursor) {
-  drawSectionTitle(doc, cursor, "Skills");
-  for (const g of skillGroups) {
-    ensureSpace(doc, cursor, 30);
+function drawExperience(doc: jsPDF, cursor: Cursor, t: LocaleShape) {
+  drawSectionTitle(doc, cursor, t.pdf.experience);
+
+  for (const id of experienceIds) {
+    const meta = experiencesMeta[id];
+    const copy = t.experience.items[id];
+
+    ensureSpace(doc, cursor, 60);
+
     doc.setFont("helvetica", "bold");
-    doc.setFontSize(9.5);
+    doc.setFontSize(11);
     setText(doc, COLOR.ink);
-    doc.text(g.title.toUpperCase(), MARGIN_X, cursor.y);
-    cursor.y += 10;
-    drawChips(doc, cursor, g.items);
-    cursor.y += 4;
+    doc.text(copy.role, MARGIN_X, cursor.y);
+
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(9);
+    setText(doc, COLOR.muted);
+    doc.text(copy.period, PAGE_W - MARGIN_X, cursor.y, { align: "right" });
+
+    cursor.y += 14;
+
+    doc.setFont("helvetica", "italic");
+    doc.setFontSize(10);
+    setText(doc, COLOR.accentDark);
+    const meta_str = `${copy.company}  ·  ${copy.location}  ·  ${
+      t.experience.types[meta.type]
+    }`;
+    doc.text(meta_str, MARGIN_X, cursor.y);
+    cursor.y += 12;
+
+    for (const h of copy.highlights) {
+      drawBullet(doc, cursor, h);
+    }
+
+    if (meta.stack && meta.stack.length) {
+      cursor.y += 6;
+      drawChips(doc, cursor, meta.stack);
+    }
+
+    cursor.y += 16;
   }
 }
 
-function drawProjects(doc: jsPDF, cursor: Cursor) {
-  drawSectionTitle(doc, cursor, "Selected Projects");
+function drawSkills(doc: jsPDF, cursor: Cursor, t: LocaleShape) {
+  drawSectionTitle(doc, cursor, t.pdf.skills);
 
-  for (const p of projects) {
+  const groups = skillGroupIds
+    .map((id) => ({
+      id,
+      title: t.skills.groupTitles[id].toUpperCase(),
+      items: id === "practices" ? t.skills.practices : skillGroupItems[id],
+    }))
+    .filter((g) => g.items.length > 0);
+
+  groups.forEach((g, i) => {
+    // Reserve enough vertical room for at least the title + first chip row
+    // so a group title is never orphaned at the bottom of a page.
+    ensureSpace(doc, cursor, 48);
+
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(9.5);
+    setText(doc, COLOR.ink);
+    doc.text(g.title, MARGIN_X, cursor.y);
+
+    // Title baseline → top edge of chip row
+    cursor.y += 8;
+    drawChips(doc, cursor, g.items);
+
+    // Bottom of last chip row → next group title baseline
+    if (i < groups.length - 1) cursor.y += 18;
+    else cursor.y += 8;
+  });
+}
+
+function drawProjects(doc: jsPDF, cursor: Cursor, t: LocaleShape) {
+  drawSectionTitle(doc, cursor, t.pdf.projects);
+
+  for (const id of projectIds) {
+    const meta = projectsMeta[id];
+    const copy = t.projects.items[id];
+
     ensureSpace(doc, cursor, 50);
 
     doc.setFont("helvetica", "bold");
     doc.setFontSize(10.5);
     setText(doc, COLOR.ink);
-    doc.text(p.name, MARGIN_X, cursor.y);
+    doc.text(copy.name, MARGIN_X, cursor.y);
 
     doc.setFont("helvetica", "normal");
     doc.setFontSize(8.5);
     setText(doc, COLOR.muted);
-    doc.text(`[${p.category}]`, PAGE_W - MARGIN_X, cursor.y, {
+    doc.text(`[${t.projects.filters[meta.category]}]`, PAGE_W - MARGIN_X, cursor.y, {
       align: "right",
     });
     cursor.y += 12;
@@ -304,51 +323,58 @@ function drawProjects(doc: jsPDF, cursor: Cursor) {
     doc.setFont("helvetica", "italic");
     doc.setFontSize(9.5);
     setText(doc, COLOR.accentDark);
-    doc.text(p.tagline, MARGIN_X, cursor.y);
+    doc.text(copy.tagline, MARGIN_X, cursor.y);
     cursor.y += 12;
 
-    drawWrappedText(doc, cursor, p.description, {
+    drawWrappedText(doc, cursor, copy.description, {
       fontSize: 9.5,
       lineGap: 2,
       color: COLOR.text,
     });
 
-    if (p.link) {
+    if (meta.link) {
       doc.setFont("helvetica", "normal");
       doc.setFontSize(8.5);
       setText(doc, COLOR.cyan);
-      doc.textWithLink(`↳ ${p.link}`, MARGIN_X, cursor.y, { url: p.link });
-      cursor.y += 12;
+      doc.textWithLink(`↳ ${meta.link}`, MARGIN_X, cursor.y, { url: meta.link });
+      cursor.y += 10;
     }
 
-    drawChips(doc, cursor, p.stack);
-    cursor.y += 6;
+    cursor.y += 2;
+    drawChips(doc, cursor, meta.stack);
+    cursor.y += 16;
   }
 }
 
-function drawEducation(doc: jsPDF, cursor: Cursor) {
-  drawSectionTitle(doc, cursor, "Education");
+function drawEducation(doc: jsPDF, cursor: Cursor, t: LocaleShape) {
+  drawSectionTitle(doc, cursor, t.pdf.education);
 
   ensureSpace(doc, cursor, 32);
   doc.setFont("helvetica", "bold");
   doc.setFontSize(11);
   setText(doc, COLOR.ink);
-  doc.text(education.degree, MARGIN_X, cursor.y);
+  doc.text(t.skills.education.degree, MARGIN_X, cursor.y);
 
   doc.setFont("helvetica", "normal");
   doc.setFontSize(9);
   setText(doc, COLOR.muted);
-  doc.text(education.period, PAGE_W - MARGIN_X, cursor.y, { align: "right" });
+  doc.text(t.skills.education.period, PAGE_W - MARGIN_X, cursor.y, {
+    align: "right",
+  });
   cursor.y += 14;
 
   doc.setFont("helvetica", "italic");
   doc.setFontSize(10);
   setText(doc, COLOR.accentDark);
-  doc.text(`${education.school} · ${education.location}`, MARGIN_X, cursor.y);
+  doc.text(
+    `${t.skills.education.school} · ${t.skills.education.location}`,
+    MARGIN_X,
+    cursor.y
+  );
   cursor.y += 14;
 }
 
-export async function generateCV(): Promise<void> {
+export async function generateCV(lang: Language = "en"): Promise<void> {
   const { default: JsPDF } = await import("jspdf");
   const doc = new JsPDF({
     unit: "pt",
@@ -356,40 +382,33 @@ export async function generateCV(): Promise<void> {
     compress: true,
   });
 
+  const t = LOCALES[lang] ?? LOCALES.en;
   const cursor: Cursor = { y: MARGIN_TOP };
 
-  drawHeader(doc, cursor);
-  addPageFooter(doc);
+  drawHeader(doc, cursor, t);
+  drawSummary(doc, cursor, t);
+  drawExperience(doc, cursor, t);
+  drawSkills(doc, cursor, t);
+  drawProjects(doc, cursor, t);
+  drawEducation(doc, cursor, t);
 
-  drawSummary(doc, cursor);
-  drawExperience(doc, cursor);
-  drawSkills(doc, cursor);
-  drawProjects(doc, cursor);
-  drawEducation(doc, cursor);
-
-  // Re-stamp page numbers/footer on every page (page count may have grown)
+  // Stamp page numbers/footer on every page (page count may have grown)
   const totalPages = doc.getNumberOfPages();
   for (let i = 1; i <= totalPages; i++) {
     doc.setPage(i);
-    // Clear the previous footer area by drawing a white rectangle
     setFill(doc, [255, 255, 255]);
     doc.rect(0, PAGE_H - 36, PAGE_W, 36, "F");
     doc.setFont("helvetica", "normal");
     doc.setFontSize(8);
     setText(doc, COLOR.muted);
-    doc.text(
-      `${profile.name}  ·  ${profile.email}`,
-      MARGIN_X,
-      PAGE_H - 20
-    );
-    doc.text(
-      `Page ${i} of ${totalPages}`,
-      PAGE_W - MARGIN_X,
-      PAGE_H - 20,
-      { align: "right" }
-    );
+    doc.text(`${profile.name}  ·  ${profile.email}`, MARGIN_X, PAGE_H - 20);
+    const pageOf = t.pdf.pageOf
+      .replace("{{n}}", String(i))
+      .replace("{{total}}", String(totalPages));
+    doc.text(pageOf, PAGE_W - MARGIN_X, PAGE_H - 20, { align: "right" });
   }
 
   const safeName = profile.name.replace(/\s+/g, "-");
-  doc.save(`${safeName}-CV.pdf`);
+  const suffix = lang.toUpperCase();
+  doc.save(`${safeName}-CV-${suffix}.pdf`);
 }

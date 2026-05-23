@@ -1,20 +1,34 @@
 import { GraduationCap } from "lucide-react";
 import Reveal from "./Reveal";
 import SectionHeader from "./SectionHeader";
-import { education, skillGroups } from "../data/portfolio";
+import {
+  skillGroupIds,
+  skillGroupItems,
+  type SkillGroupId,
+} from "../data/portfolio";
+import { useT } from "../i18n/useT";
 
 export default function Skills() {
+  const { t } = useT();
+
+  const groups: { id: SkillGroupId; title: string; items: readonly string[] }[] =
+    skillGroupIds.map((id) => ({
+      id,
+      title: t.skills.groupTitles[id],
+      items: id === "practices" ? t.skills.practices : skillGroupItems[id],
+    }));
+
   return (
     <section id="skills" className="container-x py-28">
       <SectionHeader
-        eyebrow="Toolkit"
-        title="The stack I reach for — and the practices that hold it together."
-        description="Tools change every year. The instinct to choose the simplest one that solves the actual problem doesn't."
+        eyebrow={t.skills.eyebrow}
+        title={t.skills.title}
+        description={t.skills.description}
       />
 
       <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-3">
-        {skillGroups.map((g, i) => (
-          <Reveal key={g.title} delay={i * 0.06}>
+        {groups.map((g, i) => (
+          <Reveal key={g.id} delay={i * 0.06}>
             <div className="glass h-full rounded-3xl p-6">
               <h3 className="font-display text-sm font-semibold uppercase tracking-[0.2em] text-white/60">
                 {g.title}
@@ -42,15 +56,15 @@ export default function Skills() {
             </div>
             <div>
               <h3 className="font-display text-lg font-semibold text-white">
-                {education.degree}
+                {t.skills.education.degree}
               </h3>
               <p className="text-sm text-white/60">
-                {education.school} · {education.location}
+                {t.skills.education.school} · {t.skills.education.location}
               </p>
             </div>
           </div>
           <span className="font-mono text-xs uppercase tracking-[0.2em] text-white/50">
-            {education.period}
+            {t.skills.education.period}
           </span>
         </div>
       </Reveal>

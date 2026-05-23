@@ -1,24 +1,21 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
-import {
-  ArrowRight,
-  Download,
-  Mail,
-  Sparkles,
-} from "lucide-react";
+import { ArrowRight, Download, Mail, Sparkles } from "lucide-react";
 import { FaGithub, FaLinkedin } from "react-icons/fa";
 import { profile } from "../data/portfolio";
 import profilePhoto from "../assets/profile.png";
 import { downloadCV } from "../utils/downloadCV";
+import { useT } from "../i18n/useT";
 
 export default function Hero() {
   const [downloading, setDownloading] = useState(false);
+  const { t, lang } = useT();
 
   const handleDownload = async () => {
     if (downloading) return;
     setDownloading(true);
     try {
-      await downloadCV();
+      await downloadCV(lang);
     } finally {
       setDownloading(false);
     }
@@ -46,9 +43,7 @@ export default function Hero() {
                 <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
                 <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-400" />
               </span>
-              {profile.available
-                ? "Open for new opportunities"
-                : "Currently engaged"}
+              {profile.available ? t.hero.statusOpen : t.hero.statusBusy}
             </span>
 
             <motion.h1
@@ -61,11 +56,12 @@ export default function Hero() {
               }}
               className="font-display text-[clamp(2.2rem,5vw,4.4rem)] font-bold leading-[1.05] tracking-tight"
             >
-              Hi, I'm <span className="gradient-text">{profile.name}</span>.
+              {t.hero.greeting}{" "}
+              <span className="gradient-text">{profile.name}</span>.
               <br />
-              I build software
+              {t.hero.headlineLine1}
               <span className="relative ml-3 inline-block">
-                <span className="gradient-text">that ships.</span>
+                <span className="gradient-text">{t.hero.headlineHighlight}</span>
                 <Sparkles
                   className="absolute -right-7 -top-3 text-cyan-neon"
                   size={22}
@@ -79,7 +75,7 @@ export default function Hero() {
               transition={{ delay: 0.2, duration: 0.7 }}
               className="max-w-2xl text-lg text-white/70 sm:text-xl"
             >
-              {profile.tagline}
+              {t.about.tagline}
             </motion.p>
 
             <motion.div
@@ -89,7 +85,7 @@ export default function Hero() {
               className="mt-2 flex flex-wrap items-center gap-3"
             >
               <a href="#contact" className="btn-primary">
-                Let's build something <ArrowRight size={16} />
+                {t.hero.primaryCta} <ArrowRight size={16} />
               </a>
               <button
                 type="button"
@@ -98,7 +94,7 @@ export default function Hero() {
                 className="btn-ghost disabled:cursor-wait disabled:opacity-60"
               >
                 <Download size={16} />
-                {downloading ? "Generating…" : "Download CV"}
+                {downloading ? t.nav.generating : t.nav.downloadCV}
               </button>
               <div className="ml-auto flex items-center gap-1 sm:ml-2">
                 <a
@@ -152,10 +148,10 @@ export default function Hero() {
                   <div className="absolute inset-x-4 bottom-4 flex items-center justify-between rounded-2xl border border-white/10 bg-ink-950/60 px-4 py-3 backdrop-blur-md">
                     <div>
                       <div className="text-xs uppercase tracking-[0.2em] text-white/50">
-                        Currently
+                        {t.hero.portraitNowLabel}
                       </div>
                       <div className="text-sm font-medium text-white">
-                        Lead E-commerce · Vigo
+                        {t.hero.portraitNowValue}
                       </div>
                     </div>
                     <span className="flex h-2 w-2">
@@ -174,10 +170,10 @@ export default function Hero() {
               >
                 <div className="glass rounded-2xl px-3 py-2 text-xs">
                   <div className="font-mono uppercase tracking-[0.18em] text-white/50">
-                    Since
+                    {t.hero.chipSinceLabel}
                   </div>
                   <div className="font-display text-sm font-semibold text-white">
-                    2019
+                    {t.hero.chipSinceValue}
                   </div>
                 </div>
               </motion.div>
@@ -190,10 +186,10 @@ export default function Hero() {
               >
                 <div className="glass rounded-2xl px-3 py-2 text-xs">
                   <div className="font-mono uppercase tracking-[0.18em] text-white/50">
-                    Stack
+                    {t.hero.chipStackLabel}
                   </div>
                   <div className="font-display text-sm font-semibold text-white">
-                    TS · Node · React
+                    {t.hero.chipStackValue}
                   </div>
                 </div>
               </motion.div>
@@ -207,7 +203,7 @@ export default function Hero() {
           transition={{ delay: 0.4, duration: 0.7 }}
           className="mt-16 grid grid-cols-2 gap-3 sm:grid-cols-4 sm:gap-4"
         >
-          {profile.stats.map((s) => (
+          {t.hero.stats.map((s) => (
             <div
               key={s.label}
               className="glass relative overflow-hidden rounded-2xl p-5"

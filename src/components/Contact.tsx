@@ -3,14 +3,16 @@ import { FaGithub, FaLinkedin } from "react-icons/fa";
 import Reveal from "./Reveal";
 import SectionHeader from "./SectionHeader";
 import { profile } from "../data/portfolio";
+import { useT } from "../i18n/useT";
 
 export default function Contact() {
+  const { t } = useT();
   return (
     <section id="contact" className="container-x py-28">
       <SectionHeader
-        eyebrow="Contact"
-        title="Got a problem worth solving?"
-        description="Whether it's an ambitious greenfield product, a stuck legacy system, or an engineering team that needs leadership — I'd love to hear about it."
+        eyebrow={t.contact.eyebrow}
+        title={t.contact.title}
+        description={t.contact.description}
       />
 
       <div className="grid gap-5 lg:grid-cols-[1.1fr,1fr]">
@@ -21,18 +23,14 @@ export default function Contact() {
 
             <div className="relative">
               <h3 className="font-display text-2xl font-bold leading-tight text-white sm:text-3xl">
-                Let's start a conversation.
+                {t.contact.cardTitle}
               </h3>
               <p className="mt-3 max-w-md text-white/70">
-                The fastest way to reach me is email. I usually reply within a
-                business day.
+                {t.contact.cardDescription}
               </p>
 
-              <a
-                href={`mailto:${profile.email}`}
-                className="btn-primary mt-6"
-              >
-                Email me <ArrowRight size={16} />
+              <a href={`mailto:${profile.email}`} className="btn-primary mt-6">
+                {t.contact.emailMe} <ArrowRight size={16} />
               </a>
 
               <div className="mt-8 grid gap-3 text-sm">
@@ -63,11 +61,10 @@ export default function Contact() {
           <div className="glass flex h-full flex-col justify-between gap-6 rounded-3xl p-8">
             <div>
               <h3 className="font-display text-xl font-semibold text-white">
-                Find me elsewhere
+                {t.contact.elsewhereTitle}
               </h3>
               <p className="mt-2 text-sm text-white/60">
-                I'm most active on LinkedIn for collaboration and on GitHub for
-                code.
+                {t.contact.elsewhereDescription}
               </p>
             </div>
 
@@ -106,7 +103,7 @@ export default function Contact() {
 
             <div className="rounded-2xl border border-emerald-400/20 bg-emerald-400/5 p-4 text-sm text-emerald-200/90">
               <span className="mr-2 inline-flex h-2 w-2 rounded-full bg-emerald-400 align-middle" />
-              Currently open to senior / lead engineering roles & consulting.
+              {t.contact.statusOpen}
             </div>
           </div>
         </Reveal>

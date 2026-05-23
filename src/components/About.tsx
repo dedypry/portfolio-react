@@ -1,21 +1,22 @@
 import { Compass, Layers, Rocket } from "lucide-react";
 import Reveal from "./Reveal";
 import SectionHeader from "./SectionHeader";
-import { philosophy, profile } from "../data/portfolio";
+import { useT } from "../i18n/useT";
 
 const icons = [Layers, Compass, Rocket];
 
 export default function About() {
+  const { t } = useT();
   return (
     <section id="about" className="container-x py-28">
       <SectionHeader
-        eyebrow="About"
-        title="A pragmatic engineer who leads from the keyboard."
-        description={profile.intro}
+        eyebrow={t.about.eyebrow}
+        title={t.about.title}
+        description={t.about.description}
       />
 
       <div className="grid gap-4 md:grid-cols-3">
-        {philosophy.map((p, i) => {
+        {t.about.items.map((p, i) => {
           const Icon = icons[i % icons.length];
           return (
             <Reveal key={p.title} delay={i * 0.08}>

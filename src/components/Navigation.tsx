@@ -4,22 +4,25 @@ import { Download, Menu, X } from "lucide-react";
 import { profile } from "../data/portfolio";
 import { useActiveSection } from "../hooks/useActiveSection";
 import { downloadCV } from "../utils/downloadCV";
+import { useT } from "../i18n/useT";
+import LanguageSwitcher from "./LanguageSwitcher";
 
-const links = [
-  { id: "about", label: "About" },
-  { id: "experience", label: "Experience" },
-  { id: "projects", label: "Projects" },
-  { id: "skills", label: "Skills" },
-  { id: "contact", label: "Contact" },
-];
-
-const SECTION_IDS = ["top", ...links.map((l) => l.id)];
+const SECTION_IDS = ["top", "about", "experience", "projects", "skills", "contact"];
 
 export default function Navigation() {
   const [scrolled, setScrolled] = useState(false);
   const [open, setOpen] = useState(false);
   const [downloading, setDownloading] = useState(false);
+  const { t, lang } = useT();
   const active = useActiveSection(SECTION_IDS, 140);
+
+  const links = [
+    { id: "about", label: t.nav.about },
+    { id: "experience", label: t.nav.experience },
+    { id: "projects", label: t.nav.projects },
+    { id: "skills", label: t.nav.skills },
+    { id: "contact", label: t.nav.contact },
+  ];
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 12);
@@ -32,7 +35,7 @@ export default function Navigation() {
     if (downloading) return;
     setDownloading(true);
     try {
-      await downloadCV();
+      await downloadCV(lang);
     } finally {
       setDownloading(false);
     }
@@ -46,7 +49,7 @@ export default function Navigation() {
           : "bg-transparent"
       }`}
     >
-      <nav className="container-x flex h-16 items-center justify-between">
+      <nav className="container-x flex h-16 items-center justify-between gap-4">
         <a
           href="#top"
           className="group inline-flex items-center gap-2 font-display text-sm font-bold tracking-tight"
@@ -65,9 +68,7 @@ export default function Navigation() {
                 <a
                   href={`#${l.id}`}
                   className={`relative inline-flex rounded-full px-4 py-2 text-sm transition-colors ${
-                    isActive
-                      ? "text-white"
-                      : "text-white/60 hover:text-white"
+                    isActive ? "text-white" : "text-white/60 hover:text-white"
                   }`}
                 >
                   {isActive && (
@@ -91,33 +92,39 @@ export default function Navigation() {
           })}
         </ul>
 
-        <div className="hidden md:flex md:items-center md:gap-2">
+        <div className="flex items-center gap-2">
+          <div className="hidden md:block">
+            <LanguageSwitcher />
+          </div>
           <button
             type="button"
             onClick={handleDownload}
             disabled={downloading}
-            className="btn-ghost !px-4 !py-2 text-xs disabled:cursor-wait disabled:opacity-60"
+            className="btn-ghost hidden !px-4 !py-2 text-xs disabled:cursor-wait disabled:opacity-60 md:inline-flex"
           >
             <Download size={14} />
-            {downloading ? "Generating…" : "Download CV"}
+            {downloading ? t.nav.generating : t.nav.downloadCV}
           </button>
-          <a href="#contact" className="btn-primary !px-5 !py-2 text-xs">
-            Let's talk
+          <a
+            href="#contact"
+            className="btn-primary hidden !px-5 !py-2 text-xs md:inline-flex"
+          >
+            {t.nav.letsTalk}
           </a>
-        </div>
 
-        <button
-          className="rounded-lg border border-white/10 bg-white/5 p-2 md:hidden"
-          onClick={() => setOpen((v) => !v)}
-          aria-label="Toggle menu"
-        >
-          {open ? <X size={18} /> : <Menu size={18} />}
-        </button>
+          <button
+            className="rounded-lg border border-white/10 bg-white/5 p-2 md:hidden"
+            onClick={() => setOpen((v) => !v)}
+            aria-label={t.nav.toggleMenu}
+          >
+            {open ? <X size={18} /> : <Menu size={18} />}
+          </button>
+        </div>
       </nav>
 
       {open && (
         <div className="border-t border-white/5 bg-ink-950/95 backdrop-blur-xl md:hidden">
-          <div className="container-x flex flex-col py-3">
+          <div className="container-x flex flex-col gap-1 py-3">
             {links.map((l) => {
               const isActive = active === l.id;
               return (
@@ -138,6 +145,11 @@ export default function Navigation() {
                 </a>
               );
             })}
+
+            <div className="mt-2 px-2">
+              <LanguageSwitcher variant="full" />
+            </div>
+
             <button
               type="button"
               onClick={() => {
@@ -148,14 +160,14 @@ export default function Navigation() {
               className="btn-ghost mt-2"
             >
               <Download size={14} />
-              {downloading ? "Generating…" : "Download CV"}
+              {downloading ? t.nav.generating : t.nav.downloadCV}
             </button>
             <a
               href="#contact"
               onClick={() => setOpen(false)}
               className="btn-primary mt-2"
             >
-              Let's talk
+              {t.nav.letsTalk}
             </a>
           </div>
         </div>
